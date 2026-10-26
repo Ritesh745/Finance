@@ -1,0 +1,436 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#0b1020">
+  <meta name="description" content="A smart, student-friendly personal expense and savings tracker.">
+  <title>PocketWise — Student Expense Tracker</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="script.js" defer></script>
+</head>
+
+<body>
+  <div class="app-shell">
+
+    <aside class="sidebar" id="sidebar">
+      <a class="brand" href="#" data-page="dashboard">
+        <span class="brand-icon">₹</span>
+        <span>Pocket<span class="brand-accent">Wise</span>
+          <small>STUDENT FINANCE</small>
+        </span>
+      </a>
+
+      <div class="sidebar-label">WORKSPACE</div>
+
+      <nav class="navigation" aria-label="Main navigation">
+        <button class="nav-item active" data-page="dashboard">
+          <span>◫</span> Dashboard
+        </button>
+        <button class="nav-item" data-page="transactions">
+          <span>↔</span> Transactions
+        </button>
+        <button class="nav-item" data-page="budgets">
+          <span>▤</span> Monthly budgets
+        </button>
+        <button class="nav-item" data-page="savings">
+          <span>◎</span> Savings goals
+        </button>
+        <button class="nav-item" data-page="reports">
+          <span>▥</span> Reports & insights
+        </button>
+      </nav>
+
+      <div class="sidebar-label">PREFERENCES</div>
+      <nav class="navigation">
+        <button class="nav-item" data-page="settings">
+          <span>⚙</span> Settings & data
+        </button>
+      </nav>
+
+      <div class="sidebar-bottom">
+        <div class="student-card">
+          <div class="student-avatar">🎓</div>
+          <div>
+            <strong id="sidebarName">College Student</strong>
+            <small>Your money, your rules.</small>
+          </div>
+        </div>
+        <p class="sidebar-note">Built for student life.<br>Spend smart. Save more.</p>
+      </div>
+    </aside>
+
+    <main class="main-content">
+      <header class="topbar">
+        <div class="topbar-left">
+          <button class="icon-button mobile-menu" id="menuToggle"
+            aria-label="Toggle navigation">☰</button>
+          <div>
+            <p class="eyebrow" id="currentDate">YOUR FINANCIAL SPACE</p>
+            <h1 id="pageHeading">Your dashboard</h1>
+          </div>
+        </div>
+
+        <div class="topbar-actions">
+          <label class="month-picker-wrap">
+            <span>Month</span>
+            <input type="month" id="monthPicker" aria-label="Choose month">
+          </label>
+          <button class="button button-primary" id="addExpenseTop">
+            <span>＋</span> Add transaction
+          </button>
+        </div>
+      </header>
+
+      <div class="notice" id="notice" role="status" aria-live="polite" hidden></div>
+
+      <!-- DASHBOARD -->
+      <section class="page-section active" id="page-dashboard">
+        <div class="welcome-row">
+          <div>
+            <p class="eyebrow">YOUR MONEY AT A GLANCE</p>
+            <h2 id="welcomeTitle">Small expenses. Big awareness.</h2>
+            <p class="muted">Every rupee counts. Let's make yours work for you.</p>
+          </div>
+          <div class="month-chip" id="selectedMonthLabel">This month</div>
+        </div>
+
+        <div class="stats-grid">
+          <article class="stat-card accent-card">
+            <div class="stat-top">
+              <span>Pocket money received</span>
+              <span class="stat-icon">↙</span>
+            </div>
+            <div class="stat-value" id="statIncome">₹0</div>
+            <div class="stat-foot">Money available for this month</div>
+          </article>
+
+          <article class="stat-card">
+            <div class="stat-top">
+              <span>Total expenses</span>
+              <span class="stat-icon red-icon">↗</span>
+            </div>
+            <div class="stat-value" id="statExpenses">₹0</div>
+            <div class="stat-foot" id="expenseFoot">Your spending this month</div>
+          </article>
+
+          <article class="stat-card">
+            <div class="stat-top">
+              <span>Money remaining</span>
+              <span class="stat-icon green-icon">₹</span>
+            </div>
+            <div class="stat-value" id="statRemaining">₹0</div>
+            <div class="stat-foot">Pocket money minus expenses</div>
+          </article>
+
+          <article class="stat-card">
+            <div class="stat-top">
+              <span>Savings rate</span>
+              <span class="stat-icon purple-icon">%</span>
+            </div>
+            <div class="stat-value" id="statSavingsRate">0%</div>
+            <div class="stat-foot">Of your pocket money retained</div>
+          </article>
+        </div>
+
+        <div class="content-grid dashboard-grid">
+          <article class="panel">
+            <div class="panel-heading">
+              <div>
+                <h3>Spending overview</h3>
+                <p class="muted">Where your money goes</p>
+              </div>
+              <select id="overviewMode" aria-label="Spending chart type">
+                <option value="doughnut">Category breakdown</option>
+                <option value="bar">Category comparison</option>
+              </select>
+            </div>
+            <div class="chart-container">
+              <canvas id="categoryChart" aria-label="Expenses by category"></canvas>
+              <div id="chartEmpty" class="chart-empty">Add an expense to see your chart.</div>
+            </div>
+            <div id="categoryLegend" class="category-legend"></div>
+          </article>
+
+          <article class="panel">
+            <div class="panel-heading">
+              <div>
+                <h3>Monthly money flow</h3>
+                <p class="muted">Pocket money vs expenses</p>
+              </div>
+            </div>
+            <div class="chart-container flow-chart-container">
+              <canvas id="flowChart" aria-label="Monthly income and expenses"></canvas>
+              <div id="flowEmpty" class="chart-empty">Your monthly comparison will appear here.</div>
+            </div>
+            <div class="flow-summary">
+              <div><span class="dot dot-income"></span> Pocket money</div>
+              <div><span class="dot dot-expense"></span> Expenses</div>
+            </div>
+          </article>
+        </div>
+
+        <div class="content-grid lower-grid">
+          <article class="panel">
+            <div class="panel-heading">
+              <div>
+                <h3>Recent transactions</h3>
+                <p class="muted">Your latest money activity</p>
+              </div>
+              <button class="text-button" data-page="transactions">View all →</button>
+            </div>
+            <div class="table-scroll">
+              <table>
+                <thead>
+                  <tr><th>Transaction</th><th>Date</th><th>Category</th><th>Amount</th><th></th></tr>
+                </thead>
+                <tbody id="recentTransactions"></tbody>
+              </table>
+            </div>
+            <div class="empty-state" id="recentEmpty">
+              <span>🧾</span>
+              <strong>No transactions yet</strong>
+              <p>Start by recording your first expense.</p>
+              <button class="button button-secondary" data-open-expense>Add first expense</button>
+            </div>
+          </article>
+
+          <article class="panel">
+            <div class="panel-heading">
+              <div>
+                <h3>Smart student insights</h3>
+                <p class="muted">A little awareness goes a long way</p>
+              </div>
+              <span class="insight-spark">✦</span>
+            </div>
+            <div id="insightsList" class="insights-list"></div>
+          </article>
+        </div>
+
+        <div class="content-grid lower-grid">
+          <article class="panel">
+            <div class="panel-heading">
+              <div>
+                <h3>Daily spending allowance</h3>
+                <p class="muted">A guide for the rest of the month</p>
+              </div>
+              <span class="stat-icon">◷</span>
+            </div>
+            <div class="allowance-amount" id="dailyAllowance">₹0</div>
+            <p class="muted" id="allowanceDescription">Set your pocket money to get a daily guide.</p>
+            <div class="progress-track"><div class="progress-fill" id="allowanceProgress"></div></div>
+            <p class="small-muted" id="allowanceFoot"></p>
+          </article>
+
+          <article class="panel goal-preview">
+            <div class="panel-heading">
+              <div>
+                <h3>Your savings goals</h3>
+                <p class="muted">Saving a little at a time</p>
+              </div>
+              <button class="text-button" data-page="savings">View goals →</button>
+            </div>
+            <div id="dashboardGoals"></div>
+            <button class="button button-secondary full-width" data-page="savings">＋ Manage savings goals</button>
+          </article>
+        </div>
+      </section>
+
+      <!-- TRANSACTIONS -->
+      <section class="page-section" id="page-transactions">
+        <div class="section-intro">
+          <div>
+            <h2>Your transactions</h2>
+            <p class="muted">Record every rupee and know exactly where it goes.</p>
+          </div>
+          <button class="button button-primary" data-open-expense>＋ Add transaction</button>
+        </div>
+
+        <div class="stats-grid compact-stats">
+          <article class="stat-card"><div class="stat-top">Total records</div><div class="stat-value" id="txCount">0</div></article>
+          <article class="stat-card"><div class="stat-top">Money in</div><div class="stat-value" id="txIncome">₹0</div></article>
+          <article class="stat-card"><div class="stat-top">Money out</div><div class="stat-value" id="txExpenses">₹0</div></article>
+        </div>
+
+        <article class="panel">
+          <div class="filters">
+            <input type="search" id="searchTransactions" placeholder="Search transactions..." aria-label="Search transactions">
+            <select id="filterType" aria-label="Filter by transaction type">
+              <option value="all">All types</option>
+              <option value="expense">Expenses</option>
+              <option value="income">Income</option>
+            </select>
+            <select id="filterCategory" aria-label="Filter by category">
+              <option value="all">All categories</option>
+            </select>
+            <select id="sortTransactions" aria-label="Sort transactions">
+              <option value="date-desc">Newest first</option>
+              <option value="date-asc">Oldest first</option>
+              <option value="amount-desc">Highest amount</option>
+              <option value="amount-asc">Lowest amount</option>
+              <option value="name-asc">Name A–Z</option>
+            </select>
+          </div>
+          <div class="table-scroll">
+            <table>
+              <thead>
+                <tr><th>Transaction</th><th>Date</th><th>Category</th><th>Type</th><th>Amount</th><th>Actions</th></tr>
+              </thead>
+              <tbody id="allTransactions"></tbody>
+            </table>
+          </div>
+          <div class="empty-state" id="transactionsEmpty">
+            <span>📒</span><strong>Nothing here yet</strong>
+            <p>Try adding a transaction or changing your filters.</p>
+          </div>
+          <div class="table-footer"><span id="transactionCountLabel">0 transactions</span></div>
+        </article>
+      </section>
+
+      <!-- BUDGETS -->
+      <section class="page-section" id="page-budgets">
+        <div class="section-intro">
+          <div>
+            <h2>Monthly budgets</h2>
+            <p class="muted">Set spending limits that fit your student life.</p>
+          </div>
+          <button class="button button-primary" id="addBudgetButton">＋ Set category budget</button>
+        </div>
+
+        <div class="stats-grid compact-stats">
+          <article class="stat-card"><div class="stat-top">Total budget limits</div><div class="stat-value" id="budgetTotal">₹0</div></article>
+          <article class="stat-card"><div class="stat-top">Spent in budgeted categories</div><div class="stat-value" id="budgetSpent">₹0</div></article>
+          <article class="stat-card"><div class="stat-top">Budget remaining</div><div class="stat-value" id="budgetRemaining">₹0</div></article>
+        </div>
+
+        <div class="budget-tip">
+          <span>💡</span>
+          <div><strong>Student tip</strong><p>Budget for essentials first, then set aside money for fun and savings. Your budget is a guide, not a punishment.</p></div>
+        </div>
+        <div id="budgetsList" class="budget-grid"></div>
+        <div id="budgetsEmpty" class="empty-state panel">
+          <span>🎯</span><strong>No budgets set yet</strong>
+          <p>Choose a category and decide how much you want to spend this month.</p>
+          <button class="button button-primary" data-add-budget>Set your first budget</button>
+        </div>
+      </section>
+
+      <!-- SAVINGS -->
+      <section class="page-section" id="page-savings">
+        <div class="section-intro">
+          <div>
+            <h2>Savings goals</h2>
+            <p class="muted">Turn small savings into something meaningful.</p>
+          </div>
+          <button class="button button-primary" id="addGoalButton">＋ Create a goal</button>
+        </div>
+
+        <div class="stats-grid compact-stats">
+          <article class="stat-card"><div class="stat-top">Total target</div><div class="stat-value" id="goalTargetTotal">₹0</div></article>
+          <article class="stat-card"><div class="stat-top">Total saved</div><div class="stat-value" id="goalSavedTotal">₹0</div></article>
+          <article class="stat-card"><div class="stat-top">Goals completed</div><div class="stat-value" id="goalCompleted">0</div></article>
+        </div>
+
+        <div id="goalsList" class="goals-grid"></div>
+        <div id="goalsEmpty" class="empty-state panel">
+          <span>🌱</span><strong>Give your savings a purpose</strong>
+          <p>Save towards headphones, a course, a trip, a laptop, or your emergency fund.</p>
+          <button class="button button-primary" data-add-goal>Create your first goal</button>
+        </div>
+      </section>
+
+      <!-- REPORTS -->
+      <section class="page-section" id="page-reports">
+        <div class="section-intro">
+          <div>
+            <h2>Reports & insights</h2>
+            <p class="muted">Understand your habits and make better money decisions.</p>
+          </div>
+          <button class="button button-secondary" id="exportCsvButton">↓ Export CSV</button>
+        </div>
+
+        <div class="stats-grid compact-stats">
+          <article class="stat-card"><div class="stat-top">Average monthly spending</div><div class="stat-value" id="avgSpending">₹0</div></article>
+          <article class="stat-card"><div class="stat-top">Highest spending month</div><div class="stat-value" id="highestMonth">—</div></article>
+          <article class="stat-card"><div class="stat-top">Total recorded expenses</div><div class="stat-value" id="allTimeExpenses">₹0</div></article>
+        </div>
+
+        <div class="content-grid dashboard-grid">
+          <article class="panel">
+            <div class="panel-heading"><div><h3>Monthly comparison</h3><p class="muted">Your last six months</p></div></div>
+            <div class="chart-container"><canvas id="historyChart" aria-label="Six-month spending history"></canvas></div>
+          </article>
+          <article class="panel">
+            <div class="panel-heading"><div><h3>Category breakdown</h3><p class="muted">Selected month's expenses</p></div></div>
+            <div class="chart-container"><canvas id="reportCategoryChart" aria-label="Report category breakdown"></canvas></div>
+            <div id="reportEmpty" class="chart-empty">No expenses to analyse yet.</div>
+          </article>
+        </div>
+
+        <article class="panel">
+          <div class="panel-heading"><div><h3>Personal money insights</h3><p class="muted">Based on the transactions you've recorded</p></div></div>
+          <div id="reportInsights" class="insights-list"></div>
+        </article>
+        <p class="small-muted">Reports use your recorded data. They are estimates of your personal habits, not financial advice.</p>
+      </section>
+
+      <!-- SETTINGS -->
+      <section class="page-section" id="page-settings">
+        <div class="section-intro">
+          <div><h2>Settings & data</h2><p class="muted">Personalise your PocketWise experience.</p></div>
+        </div>
+
+        <article class="panel settings-panel">
+          <div class="settings-heading"><span class="settings-icon">👤</span><div><h3>Your profile</h3><p class="muted">Make the tracker feel like yours.</p></div></div>
+          <form id="profileForm" class="settings-form">
+            <label>Your name<input id="profileName" maxlength="50" placeholder="e.g. College Student"></label>
+            <label>Currency
+              <select id="currencySelect">
+                <option value="INR">₹ Indian Rupee (INR)</option>
+                <option value="USD">$ US Dollar (USD)</option>
+                <option value="GBP">£ British Pound (GBP)</option>
+                <option value="EUR">€ Euro (EUR)</option>
+                <option value="NPR">रु Nepalese Rupee (NPR)</option>
+              </select>
+            </label>
+            <label>Monthly pocket money (default)
+              <input id="defaultPocketMoney" type="number" min="0" max="100000000" step="0.01" placeholder="e.g. 5000">
+            </label>
+            <label>Monthly savings target
+              <input id="savingsTarget" type="number" min="0" max="100000000" step="0.01" placeholder="e.g. 1000">
+            </label>
+            <button class="button button-primary" type="submit">Save preferences</button>
+          </form>
+        </article>
+
+        <article class="panel settings-panel">
+          <div class="settings-heading"><span class="settings-icon">💰</span><div><h3>Monthly pocket money</h3><p class="muted">Record money you receive, including allowances and other income.</p></div></div>
+          <form id="incomeForm" class="settings-form">
+            <label>Amount received<input type="number" id="incomeAmount" min="0.01" max="100000000" step="0.01" required placeholder="Amount in your selected currency"></label>
+            <label>Date received<input type="date" id="incomeDate" required></label>
+            <label>Source
+              <select id="incomeSource">
+                <option value="Pocket money">Pocket money</option>
+                <option value="Family allowance">Family allowance</option>
+                <option value="Part-time job">Part-time job</option>
+                <option value="Scholarship">Scholarship</option>
+                <option value="Gift">Gift</option>
+                <option value="Refund">Refund</option>
+                <option value="Other income">Other income</option>
+              </select>
+            </label>
+            <button class="button button-primary" type="submit">＋ Record money received</button>
+          </form>
+        </article>
+
+        <article class="panel settings-panel">
+          <div class="settings-heading"><span class="settings-icon">📦</span><div><h3>Data management</h3><p class="muted">Back up your records or move them to another device.</p></div></div>
+          <div class="settings-actions">
+            <button class="button button-secondary" id="exportJsonBu
